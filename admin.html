@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Des Program - لوحة الإدارة والطلبات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        :root { --bg-color: #050508; --card-bg: #0f1019; --primary-blue: #00d2ff; --primary-purple: #9d4edd; --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #9d4edd 100%); --text-color: #ffffff; --text-muted: #a0a0b0; --border-color: rgba(0, 210, 255, 0.2); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding: 40px 5%; }
+        
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .admin-header h1 { font-size: 2rem; font-weight: 900; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stats-box { background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 10px; font-size: 1.1rem; }
+        .stats-box span { color: var(--primary-blue); font-weight: 700; }
+
+        .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .order-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; position: relative; transition: 0.3s; }
+        .order-card:hover { border-color: var(--primary-blue); box-shadow: 0 5px 20px rgba(0,210,255,0.1); }
+        .order-card h3 { color: var(--primary-blue); margin-bottom: 15px; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+        .order-info { margin-bottom: 10px; font-size: 0.950rem; color: var(--text-muted); display: flex; align-items: center; gap: 10px; }
+        .order-info i { color: var(--primary-purple); width: 20px; }
+        .order-info span { color: #fff; font-weight: 500; }
+        .order-product { background: rgba(0, 210, 255, 0.1); border: 1px dashed var(--primary-blue); padding: 10px; border-radius: 8px; margin-top: 15px; color: #fff; font-weight: 700; font-size: 0.95rem; text-align: center; }
+        .order-time { font-size: 0.8rem; color: var(--text-muted); text-align: left; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
+        .no-orders { grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 1.2rem; padding: 50px; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-header">
+        <h1><i class="fa-solid fa-gauge-high"></i> لوحة تحكم الطلبات - Des Program</h1>
+        <div class="stats-box">إجمالي الطلبات الواردة: <span id="ordersCount">0</span></div>
+    </div>
+
+    <div class="orders-container" id="ordersContainer">
+        <div class="no-orders">جاري تحميل الطلبات من Firebase...</div>
+    </div>
+
+    <script>
+        // إعدادات مشروعك على Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForDesProgram...",
+            authDomain: "desprogram-89c6a.firebaseapp.com",
+            projectId: "desprogram-89c6a",
+            storageBucket: "desprogram-89c6a.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:1234:web:1234"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const ordersContainer = document.getElementById('ordersContainer');
+        const ordersCount = document.getElementById('ordersCount');
+
+        // جلب الطلبات مباشرة بشكل حي (Real-time) وترتيبها تنازلياً
+        db.collection("orders").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+            ordersContainer.innerHTML = "";
+            ordersCount.innerText = snapshot.size;
+
+            if (snapshot.empty) {
+                ordersContainer.innerHTML = `<div class="no-orders">لا توجد طلبات جديدة حتى الآن في قاعدة البيانات.</div>`;
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                
+                let timeString = "وقت غير محدد";
+                if (data.timestamp) {
+                    timeString = data.timestamp.toDate().toLocaleString('ar-EG');
+                }
+
+                const card = document.createElement('div');
+                card.className = 'order-card';
+                card.innerHTML = `
+                    <h3><span><i class="fa-solid fa-user"></i> ${data.clientName || 'بدون اسم'}</span></h3>
+                    <div class="order-info"><i class="fa-solid fa-phone"></i> الهاتف: <span>${data.clientPhone || 'غير متوفر'}</span></div>
+                    <div class="order-info"><i class="fa-solid fa-city"></i> المدينة: <span>${data.clientCity || 'غير متوفر'}</span></div>
+                    <div class="order-info"><i class="fa-solid fa-location-dot"></i> العنوان: <span>${data.clientAddress || 'غير متوفر'}</span></div>
+                    <div class="order-product"><i class="fa-solid fa-box"></i> ${data.selectedProduct || 'منتج غير محدد'}</div>
+                    <div class="order-time"><i class="fa-regular fa-clock"></i> ${timeString}</div>
+                `;
+                ordersContainer.appendChild(card);
+            });
+        }, (error) => {
+            console.error("خطأ في جلب الطلبات: ", error);
+            ordersContainer.innerHTML = `<div class="no-orders" style="color:#ff4444;">حدث خطأ أثناء تحميل الطلبات. تأكد من تفعيل Firestore في لوحة تحكم Firebase.</div>`;
+        });
+    </script>
+</body>
+</html>
