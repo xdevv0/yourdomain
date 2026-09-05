@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الأدمن - معلومات تسجيل دخول الزبائن</title>
+    <title>Des Program - لوحة تحكم الأدمن المتكاملة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -14,35 +14,106 @@
     <style>
         :root { --bg-color: #050508; --card-bg: #0f1019; --primary-blue: #00d2ff; --primary-purple: #9d4edd; --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #9d4edd 100%); --text-color: #ffffff; --text-muted: #a0a0b0; --border-color: rgba(0, 210, 255, 0.2); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); padding: 40px 5%; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding: 30px 5%; }
         
-        .admin-container { max-width: 1100px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 30px; font-size: 2.2rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .admin-container { max-width: 1200px; margin: 0 auto; }
         
-        table { width: 100%; border-collapse: collapse; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
-        th, td { padding: 15px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        th { background: rgba(0, 210, 255, 0.1); color: var(--primary-blue); font-weight: 700; }
-        tr:hover { background: rgba(255,255,255,0.02); }
-        .no-data { text-align: center; padding: 30px; color: var(--text-muted); }
+        /* الهيدر مع جرس الإشعارات */
+        header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border: 1px solid var(--border-color); padding: 20px 30px; border-radius: 15px; margin-bottom: 30px; }
+        h1 { font-size: 1.8rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .notification-container { position: relative; cursor: pointer; }
+        .notification-icon { font-size: 1.3rem; color: var(--primary-blue); background: rgba(0, 210, 255, 0.1); padding: 12px; border-radius: 50%; transition: 0.3s; }
+        .notification-icon:hover { background: rgba(0, 210, 255, 0.2); }
+        .badge { position: absolute; top: -3px; right: -3px; background: #ff007f; color: #fff; font-size: 0.75rem; padding: 2px 7px; border-radius: 50%; font-weight: bold; }
+        
+        .notification-dropdown { position: absolute; left: 0; top: 55px; width: 340px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); display: none; z-index: 100; max-height: 380px; overflow-y: auto; padding: 15px; }
+        .notification-dropdown.active { display: block; }
+        .notif-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .notif-item p { color: #fff; margin-bottom: 4px; }
+        .notif-item span { color: var(--text-muted); font-size: 0.75rem; }
+
+        /* الأقسام والجداول */
+        .section-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 15px; padding: 25px; margin-bottom: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .section-title { font-size: 1.3rem; margin-bottom: 20px; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 14px 15px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.9rem; }
+        th { background: rgba(0, 210, 255, 0.08); color: var(--primary-blue); font-weight: 700; }
+        tr:hover { background: rgba(255,255,255,0.01); }
+        .no-data { text-align: center; padding: 20px; color: var(--text-muted); }
+
+        /* أزرار وحالات الطلبات */
+        .status-badge { padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; display: inline-block; }
+        .status-pending { background: rgba(255, 170, 0, 0.15); color: #ffaa00; }
+        .status-completed { background: rgba(0, 255, 128, 0.15); color: #00ff80; }
+
+        .action-btn { background: var(--accent-gradient); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-weight: 700; font-size: 0.85rem; transition: 0.3s; }
+        .action-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .action-btn.done { background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: default; transform: none; }
     </style>
 </head>
 <body>
 
     <div class="admin-container">
-        <h1>سجلات تسجيل دخول الزبائن</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>اسم الزبون</th>
-                    <th>رقم الجوال (+970)</th>
-                    <th>كلمة المرور المسجلة</th>
-                    <th>وقت الدخول</th>
-                </tr>
-            </thead>
-            <tbody id="loginsTableBody">
-                <tr><td colspan="4" class="no-data">جاري جلب البيانات...</td></tr>
-            </tbody>
-        </table>
+        <!-- الهيدر مع نظام الإشعارات الحية -->
+        <header>
+            <h1>لوحة تحكم الأدمن</h1>
+            <div class="notification-container" id="notifContainer">
+                <div class="notification-icon">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="badge" id="notifBadge">0</span>
+                </div>
+                <div class="notification-dropdown" id="notifDropdown">
+                    <div style="font-weight: bold; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); color: var(--primary-blue);">التنبيهات الفورية</div>
+                    <div id="notifList">
+                        <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">لا توجد إشعارات جديدة</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- قسم إدارة الطلبيات الواردة وزر الانتهاء -->
+        <div class="section-box">
+            <div class="section-title"><i class="fa-solid fa-cart-shopping"></i> إدارة الطلبيات الواردة</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>رقم / اسم العميل</th>
+                            <th>تفاصيل الطلبية</th>
+                            <th>وقت الطلب</th>
+                            <th>حالة التجهيز</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <tr><td colspan="5" class="no-data">جاري جلب الطلبيات...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- قسم سجلات تسجيل دخول الزبائن الأصلي -->
+        <div class="section-box">
+            <div class="section-title"><i class="fa-solid fa-users"></i> سجلات تسجيل دخول الزبائن</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم الزبون</th>
+                            <th>رقم الجوال (+970)</th>
+                            <th>كلمة المرور المسجلة</th>
+                            <th>وقت الدخول</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loginsTableBody">
+                        <tr><td colspan="4" class="no-data">جاري جلب السجلات...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -57,21 +128,119 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        const tableBody = document.getElementById('loginsTableBody');
+        // 1. التحكم بفتح وإغلاق قائمة الإشعارات
+        const notifContainer = document.getElementById('notifContainer');
+        const notifDropdown = document.getElementById('notifDropdown');
+        notifContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('active');
+        });
+        document.addEventListener('click', () => {
+            notifDropdown.classList.remove('active');
+        });
 
-        // جلب البيانات من مجموعة client_logins بشكل حي ومحدث
-        db.collection("client_logins").orderBy("loginTime", "desc").onSnapshot((snapshot) => {
-            if (snapshot.empty) {
-                tableBody.innerHTML = `<tr><td colspan="4" class="no-data">لا توجد سجلات دخول حتى الآن.</td></tr>`;
+        // 2. الاستماع للإشعارات الحية (تسجيل دخول + طلبيات جديدة)
+        db.collection("admin_notifications").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+            let notifList = document.getElementById('notifList');
+            notifList.innerHTML = "";
+            let unreadCount = 0;
+
+            if(snapshot.empty) {
+                notifList.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">لا توجد إشعارات جديدة</p>`;
+                document.getElementById('notifBadge').innerText = "0";
                 return;
             }
 
-            let rows = "";
+            snapshot.forEach((doc) => {
+                let data = doc.data();
+                if (!data.read) unreadCount++;
+
+                let timeStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString('ar-EG') : 'الآن';
+
+                notifList.innerHTML += `
+                    <div class="notif-item">
+                        <p><strong>${data.title}</strong></p>
+                        <p>${data.message}</p>
+                        <span>${timeStr}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('notifBadge').innerText = unreadCount;
+        });
+
+        // 3. جلب الطلبيات وعرضها مع زر "تم الانتهاء من التجهيز"
+        db.collection("client_orders").orderBy("orderTime", "desc").onSnapshot((snapshot) => {
+            const ordersTableBody = document.getElementById('ordersTableBody');
+            
+            if(snapshot.empty) {
+                ordersTableBody.innerHTML = `<tr><td colspan="5" class="no-data">لا توجد طلبيات مسجلة حتى الآن.</td></tr>`;
+                return;
+            }
+
+            let orderRows = "";
+            snapshot.forEach((doc) => {
+                let order = doc.data();
+                let orderId = doc.id;
+                let isCompleted = order.status === "completed";
+
+                let statusClass = isCompleted ? "status-completed" : "status-pending";
+                let statusText = isCompleted ? "تم التجهيز والانتهاء" : "قيد المعالجة والتجهيز";
+                
+                let actionButton = isCompleted 
+                    ? `<button class="action-btn done" disabled>مكتمل</button>`
+                    : `<button class="action-btn" onclick="markAsCompleted('${orderId}')">تم الانتهاء من التجهيز</button>`;
+
+                let timeFormatted = order.orderTime ? new Date(order.orderTime.toDate()).toLocaleString('ar-EG') : 'وقت غير متوفر';
+
+                orderRows += `
+                    <tr>
+                        <td><b>${order.clientName || 'عميل'}</b><br><span style="color:var(--text-muted); font-size:0.8rem; direction: ltr; display: inline-block;">${order.clientPhone || ''}</span></td>
+                        <td>${order.orderDetails || 'طلب عام'}</td>
+                        <td>${timeFormatted}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${actionButton}</td>
+                    </tr>
+                `;
+            });
+            ordersTableBody.innerHTML = orderRows;
+        });
+
+        // دالة تغيير حالة الطلبية إلى "تم الانتهاء من التجهيز" في قاعدة البيانات
+        function markAsCompleted(orderId) {
+            if(confirm("هل أنت متأكد من الانتهاء من تجهيز هذه الطلبية؟")) {
+                db.collection("client_orders").doc(orderId).update({
+                    status: "completed"
+                }).then(() => {
+                    // إضافة إشعار اختياري للأدمن بأن الطلب أُنجز
+                    db.collection("admin_notifications").add({
+                        type: "order_done",
+                        title: "تم إنجاز طلبية",
+                        message: `تم تحديث حالة الطلبية بنجاح لتصبح مكتملة.`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false
+                    });
+                }).catch((error) => {
+                    console.error("خطأ في تحديث الحالة: ", error);
+                    alert("حدث خطأ أثناء تحديث الحالة.");
+                });
+            }
+        }
+
+        // 4. جلب سجلات تسجيل دخول الزبائن وتحديثها بشكل حي
+        const loginsTableBody = document.getElementById('loginsTableBody');
+        db.collection("client_logins").orderBy("loginTime", "desc").onSnapshot((snapshot) => {
+            if (snapshot.empty) {
+                loginsTableBody.innerHTML = `<tr><td colspan="4" class="no-data">لا توجد سجلات دخول حتى الآن.</td></tr>`;
+                return;
+            }
+
+            let loginRows = "";
             snapshot.forEach((doc) => {
                 let data = doc.data();
                 let timeFormatted = data.loginTime ? data.loginTime.toDate().toLocaleString('ar-EG') : 'وقت غير متوفر';
                 
-                rows += `
+                loginRows += `
                     <tr>
                         <td>${data.name}</td>
                         <td style="direction: ltr; text-align: right;">${data.phone}</td>
@@ -80,7 +249,7 @@
                     </tr>
                 `;
             });
-            tableBody.innerHTML = rows;
+            loginsTableBody.innerHTML = loginRows;
         });
     </script>
 </body>
