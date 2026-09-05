@@ -28,6 +28,8 @@
         .order-info i { color: var(--primary-purple); width: 20px; }
         .order-info span { color: #fff; font-weight: 500; }
         .order-product { background: rgba(0, 210, 255, 0.1); border: 1px dashed var(--primary-blue); padding: 10px; border-radius: 8px; margin-top: 15px; color: #fff; font-weight: 700; font-size: 0.95rem; text-align: center; }
+        .extra-details { background: rgba(157, 78, 221, 0.1); border: 1px solid rgba(157, 78, 221, 0.3); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; color: #e0d0f0; }
+        .extra-details a { color: var(--primary-blue); text-decoration: underline; }
         .order-time { font-size: 0.8rem; color: var(--text-muted); text-align: left; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
         .no-orders { grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 1.2rem; padding: 50px; }
     </style>
@@ -44,7 +46,6 @@
     </div>
 
     <script>
-        // إعدادات مشروعك على Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDummyKeyForDesProgram...",
             authDomain: "desprogram-89c6a.firebaseapp.com",
@@ -59,7 +60,6 @@
         const ordersContainer = document.getElementById('ordersContainer');
         const ordersCount = document.getElementById('ordersCount');
 
-        // جلب الطلبات مباشرة بشكل حي (Real-time) وترتيبها تنازلياً
         db.collection("orders").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
             ordersContainer.innerHTML = "";
             ordersCount.innerText = snapshot.size;
@@ -77,6 +77,14 @@
                     timeString = data.timestamp.toDate().toLocaleString('ar-EG');
                 }
 
+                // تجهيز تفاصيل التصميم أو رابط الموقع إذا وجدت
+                let extraHtml = "";
+                if (data.designDetails) {
+                    extraHtml = `<div class="extra-details"><strong>تفاصيل التصميم المطلوب:</strong><br>${data.designDetails}</div>`;
+                } else if (data.websiteLink) {
+                    extraHtml = `<div class="extra-details"><strong>رابط موقع الزبون:</strong><br><a href="${data.websiteLink}" target="_blank">${data.websiteLink}</a></div>`;
+                }
+
                 const card = document.createElement('div');
                 card.className = 'order-card';
                 card.innerHTML = `
@@ -85,13 +93,14 @@
                     <div class="order-info"><i class="fa-solid fa-city"></i> المدينة: <span>${data.clientCity || 'غير متوفر'}</span></div>
                     <div class="order-info"><i class="fa-solid fa-location-dot"></i> العنوان: <span>${data.clientAddress || 'غير متوفر'}</span></div>
                     <div class="order-product"><i class="fa-solid fa-box"></i> ${data.selectedProduct || 'منتج غير محدد'}</div>
+                    ${extraHtml}
                     <div class="order-time"><i class="fa-regular fa-clock"></i> ${timeString}</div>
                 `;
                 ordersContainer.appendChild(card);
             });
         }, (error) => {
             console.error("خطأ في جلب الطلبات: ", error);
-            ordersContainer.innerHTML = `<div class="no-orders" style="color:#ff4444;">حدث خطأ أثناء تحميل الطلبات. تأكد من تفعيل Firestore في لوحة تحكم Firebase.</div>`;
+            ordersContainer.innerHTML = `<div class="no-orders" style="color:#ff4444;">حدث خطأ أثناء تحميل الطلبات.</div>`;
         });
     </script>
 </body>
