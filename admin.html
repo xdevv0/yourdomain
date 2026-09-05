@@ -13,12 +13,26 @@
     <style>
         :root { --bg-color: #050508; --card-bg: #0f1019; --primary-blue: #00d2ff; --primary-purple: #9d4edd; --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #9d4edd 100%); --text-color: #ffffff; --text-muted: #a0a0b0; --border-color: rgba(0, 210, 255, 0.2); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); padding: 40px 5%; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding: 30px 5%; }
         
         .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .admin-header h1 { font-size: 2rem; font-weight: 900; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
         .stats-box { background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 10px; font-size: 1.1rem; }
         .stats-box span { color: var(--primary-blue); font-weight: 700; }
+
+        /* تنسيق أيقونة الإشعارات */
+        .notification-container { position: relative; cursor: pointer; }
+        .notification-icon { font-size: 1.3rem; color: var(--primary-blue); background: var(--card-bg); border: 1px solid var(--border-color); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 10px; transition: 0.3s; }
+        .notification-icon:hover { border-color: var(--primary-blue); background: rgba(0, 210, 255, 0.05); }
+        .badge { position: absolute; top: -5px; right: -5px; background: #ff007f; color: #fff; font-size: 0.75rem; padding: 2px 7px; border-radius: 50%; font-weight: bold; }
+        
+        .notification-dropdown { position: absolute; left: 0; top: 58px; width: 340px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); display: none; z-index: 100; max-height: 380px; overflow-y: auto; padding: 15px; }
+        .notification-dropdown.active { display: block; }
+        .notif-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .notif-item p { color: #fff; margin-bottom: 4px; }
+        .notif-item span { color: var(--text-muted); font-size: 0.75rem; }
 
         .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
         .order-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; position: relative; transition: 0.3s; }
@@ -30,7 +44,19 @@
         .order-product { background: rgba(0, 210, 255, 0.1); border: 1px dashed var(--primary-blue); padding: 10px; border-radius: 8px; margin-top: 15px; color: #fff; font-weight: 700; font-size: 0.95rem; text-align: center; }
         .extra-details { background: rgba(157, 78, 221, 0.1); border: 1px solid rgba(157, 78, 221, 0.3); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; color: #e0d0f0; }
         .extra-details a { color: var(--primary-blue); text-decoration: underline; }
-        .order-time { font-size: 0.8rem; color: var(--text-muted); text-align: left; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
+        
+        /* أزرار وحالة الطلب */
+        .order-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; }
+        .order-time { font-size: 0.8rem; color: var(--text-muted); }
+        
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+        .status-pending { background: rgba(255, 170, 0, 0.15); color: #ffaa00; }
+        .status-completed { background: rgba(0, 255, 128, 0.15); color: #00ff80; }
+
+        .action-btn { background: var(--accent-gradient); color: #fff; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-weight: 700; font-size: 0.8rem; transition: 0.3s; margin-top: 12px; width: 100%; }
+        .action-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .action-btn.done { background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: default; transform: none; }
+
         .no-orders { grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 1.2rem; padding: 50px; }
     </style>
 </head>
@@ -38,7 +64,24 @@
 
     <div class="admin-header">
         <h1><i class="fa-solid fa-gauge-high"></i> لوحة تحكم الطلبات - Des Program</h1>
-        <div class="stats-box">إجمالي الطلبات الواردة: <span id="ordersCount">0</span></div>
+        
+        <div class="header-actions">
+            <div class="stats-box">إجمالي الطلبات الواردة: <span id="ordersCount">0</span></div>
+            
+            <!-- جرس الإشعارات الحية للأدمن -->
+            <div class="notification-container" id="notifContainer">
+                <div class="notification-icon">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="badge" id="notifBadge">0</span>
+                </div>
+                <div class="notification-dropdown" id="notifDropdown">
+                    <div style="font-weight: bold; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); color: var(--primary-blue);">التنبيهات الفورية</div>
+                    <div id="notifList">
+                        <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">لا توجد إشعارات جديدة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="orders-container" id="ordersContainer">
@@ -57,6 +100,48 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // 1. التحكم بفتح وإغلاق قائمة الإشعارات
+        const notifContainer = document.getElementById('notifContainer');
+        const notifDropdown = document.getElementById('notifDropdown');
+        notifContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('active');
+        });
+        document.addEventListener('click', () => {
+            notifDropdown.classList.remove('active');
+        });
+
+        // 2. الاستماع للإشعارات الحية في قاعدة البيانات (تسجيلات دخول + طلبيات جديدة)
+        db.collection("admin_notifications").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+            let notifList = document.getElementById('notifList');
+            notifList.innerHTML = "";
+            let unreadCount = 0;
+
+            if(snapshot.empty) {
+                notifList.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">لا توجد إشعارات جديدة</p>`;
+                document.getElementById('notifBadge').innerText = "0";
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                let data = doc.data();
+                if (!data.read) unreadCount++;
+
+                let timeStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString('ar-EG') : 'الآن';
+
+                notifList.innerHTML += `
+                    <div class="notif-item">
+                        <p><strong>${data.title}</strong></p>
+                        <p>${data.message}</p>
+                        <span>${timeStr}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('notifBadge').innerText = unreadCount;
+        });
+
+        // 3. جلب الطلبات وعرضها كبطاقات شبكية مع زر "تم الانتهاء من التجهيز"
         const ordersContainer = document.getElementById('ordersContainer');
         const ordersCount = document.getElementById('ordersCount');
 
@@ -71,11 +156,21 @@
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                const docId = doc.id;
                 
                 let timeString = "وقت غير محدد";
                 if (data.timestamp) {
                     timeString = data.timestamp.toDate().toLocaleString('ar-EG');
                 }
+
+                // حالة الطلب (إذا لم تكن معرفة مسبقاً فتعتبر قيد المعالجة)
+                let isCompleted = data.status === "completed";
+                let statusClass = isCompleted ? "status-completed" : "status-pending";
+                let statusText = isCompleted ? "تم التجهيز" : "قيد التجهيز";
+
+                let actionButton = isCompleted 
+                    ? `<button class="action-btn done" disabled>تم الانتهاء من التجهيز</button>`
+                    : `<button class="action-btn" onclick="markOrderAsCompleted('${docId}')">تم الانتهاء من التجهيز</button>`;
 
                 // تجهيز تفاصيل التصميم أو رابط الموقع إذا وجدت
                 let extraHtml = "";
@@ -88,13 +183,16 @@
                 const card = document.createElement('div');
                 card.className = 'order-card';
                 card.innerHTML = `
-                    <h3><span><i class="fa-solid fa-user"></i> ${data.clientName || 'بدون اسم'}</span></h3>
-                    <div class="order-info"><i class="fa-solid fa-phone"></i> الهاتف: <span>${data.clientPhone || 'غير متوفر'}</span></div>
+                    <h3><span><i class="fa-solid fa-user"></i> ${data.clientName || 'بدون اسم'}</span> <span class="status-badge ${statusClass}">${statusText}</span></h3>
+                    <div class="order-info"><i class="fa-solid fa-phone"></i> الهاتف: <span style="direction: ltr; display: inline-block;">${data.clientPhone || 'غير متوفر'}</span></div>
                     <div class="order-info"><i class="fa-solid fa-city"></i> المدينة: <span>${data.clientCity || 'غير متوفر'}</span></div>
                     <div class="order-info"><i class="fa-solid fa-location-dot"></i> العنوان: <span>${data.clientAddress || 'غير متوفر'}</span></div>
                     <div class="order-product"><i class="fa-solid fa-box"></i> ${data.selectedProduct || 'منتج غير محدد'}</div>
                     ${extraHtml}
-                    <div class="order-time"><i class="fa-regular fa-clock"></i> ${timeString}</div>
+                    <div class="order-footer-row">
+                        <div class="order-time"><i class="fa-regular fa-clock"></i> ${timeString}</div>
+                    </div>
+                    ${actionButton}
                 `;
                 ordersContainer.appendChild(card);
             });
@@ -102,6 +200,27 @@
             console.error("خطأ في جلب الطلبات: ", error);
             ordersContainer.innerHTML = `<div class="no-orders" style="color:#ff4444;">حدث خطأ أثناء تحميل الطلبات.</div>`;
         });
+
+        // دالة تغيير حالة الطلبية إلى "مكتمل" عند النقر على الزر
+        function markOrderAsCompleted(orderId) {
+            if(confirm("هل أنت متأكد من الانتهاء من تجهيز هذه الطلبية؟")) {
+                db.collection("orders").doc(orderId).update({
+                    status: "completed"
+                }).then(() => {
+                    // إرسال إشعار اختياري للآدمن
+                    db.collection("admin_notifications").add({
+                        type: "order_done",
+                        title: "إنجاز طلب",
+                        message: `تم تحديد الطلب كـ 'مكتمل' بنجاح.`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false
+                    });
+                }).catch((error) => {
+                    console.error("خطأ في تحديث الطلب: ", error);
+                    alert("حدث خطأ أثناء تحديث حالة الطلب.");
+                });
+            }
+        }
     </script>
 </body>
 </html>
